@@ -1,0 +1,89 @@
+#Install keras 
+!pip install keras
+
+#Install tf-keras 
+pip install tf-keras
+
+#Upgrade transformer
+pip install --upgrade tensorflow transformers
+
+#Install torch 
+pip install torch
+
+import pandas as pd
+import numpy as np
+import re
+import nltk
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from transformers import pipeline
+
+nltk.download('punkt')
+
+# Sample Iban text dataset
+data = {
+    'text': [
+        'Aku sayau ke nuan',
+        'Tusah belaki nguai',
+        'Nuan ngelaban, aku suka',
+        'Tusah, aku tidak suka',
+        'Nuan indah, hati aku senang'
+    ],
+    'sentiment': [
+        'Positive',
+        'Negative',
+        'Positive',
+        'Negative',
+        'Positive'
+    ]
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Preprocessing function
+def preprocess_text(text):
+    text = re.sub(r'[^a-zA-Z\s]', '', text)  # Remove special characters
+    text = text.lower()  # Normalize to lowercase
+    return text
+
+# Apply preprocessing
+df['text'] = df['text'].apply(preprocess_text)
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(df['text'], df['sentiment'], test_size=0.2, random_state=42)
+
+# Encode labels
+label_encoder = LabelEncoder()
+y_train_encoded = label_encoder.fit_transform(y_train)
+y_test_encoded = label_encoder.transform(y_test)
+
+# Load sentiment analysis pipeline
+sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+
+# Function to predict sentiment
+def predict_sentiment(text):
+    result = sentiment_pipeline(text)
+    return result[0]['label']
+
+# Test predictions
+for text in X_test:
+    print(f"Input: {text} | Predicted Sentiment: {predict_sentiment(text)}")
+
+
+#Predict Statement 
+def predict_sentiment(text):
+    result = sentiment_pipeline(text)
+    star_rating = int(result[0]['label'].split()[0])  # Extract the star rating
+    if star_rating <= 2:
+        return "Negative"
+    elif star_rating == 3:
+        return "Neutral"
+    else:
+        return "Positive"
+
+#Test Text 
+test_texts = ["Aku sayau ke nuan", "Tusah belaki nguai", "Hati aku senang"]
+for text in test_texts:
+    sentiment = predict_sentiment(text)
+    print(f"Input: {text} | Predicted Sentiment: {sentiment}")
